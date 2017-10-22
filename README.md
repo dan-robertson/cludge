@@ -1,8 +1,8 @@
 # Cludge
 
-This was an attempt to compile common lisp to javascript. This was
+This was an attempt to compile Common Lisp to javascript. This was
 based on [SICL](https://github.com/robert-strandh/SICL) and the
-compiler Cleavir. It turns out that compiling common lisp to run
+compiler Cleavir. It turns out that compiling Common Lisp to run
 externally is difficult because the spec largely assumes that the
 compiler (and e.g. macros) have access to the run-time environment.
 This means that the compiler essentially has to compile everything
@@ -10,9 +10,9 @@ twice—Once into javascript and once into an environment so we can run
 it at compile time. And there are other problems, for example:
 
     (defmacro foo (x)
-	  (let ((y x))
+      (let ((y x))
         `(values ,(lambda () (incf y))
-		         ,(lambda () (decf y)))))
+                 ,(lambda () (decf y)))))
 
 Somehow the compiler would need to generate code to put the cell for
 `Y` somewhere and it would need to compile the two anonymous functions
@@ -32,23 +32,23 @@ for SICL at commit `dd6015dbf9ad34063632ef505b597c38c03c0359`.
 
     CL-USER> (asdf:load-system :cludge)
     ;; lots of compiling...
-	;; also cuurrently some errors with redefining constants. continue these
-	CL-USER> (defparameter *my-env* (make-instance 'js-env:compilation-environment))
-	;; Long wait
-	CL-USER> (js-cleavir:compile '(+ 5 6) *my-env*)
-	;; ommitted
-	CL-USER> (js-syntax-writer:write-js-to-string * :whole t)
-	"var l1,l2,l3,l4;var l5=Object.create(null),l6=symbol('+','COMMON-LISP',true);l2=l6.f;l3=5;l4=6;l1=l2(l5,l3,l4);return l1;"
+    ;; also cuurrently some errors with redefining constants. continue these
+    CL-USER> (defparameter *my-env* (make-instance 'js-env:compilation-environment))
+    ;; Long wait
+    CL-USER> (js-cleavir:compile '(+ 5 6) *my-env*)
+    ;; ommitted
+    CL-USER> (js-syntax-writer:write-js-to-string * :whole t)
+    "var l1,l2,l3,l4;var l5=Object.create(null),l6=symbol('+','COMMON-LISP',true);l2=l6.f;l3=5;l4=6;l1=l2(l5,l3,l4);return l1;"
 
 cleaned up:
 
     var l1, l2, l3, l4;
-	var l5 = Object.create(null), l6 = symbol('+', 'COMMON-LISP', true);
-	l2 = l6.f; //the function slot of +
-	l3 = 5;
-	l4 = 6;
-	l1 = l2(l5,l3,l4); // l5 is the dynamic environment
-	return l1;
+    var l5 = Object.create(null), l6 = symbol('+', 'COMMON-LISP', true);
+    l2 = l6.f; //the function slot of +
+    l3 = 5;
+    l4 = 6;
+    l1 = l2(l5,l3,l4); // l5 is the dynamic environment
+    return l1;
 
 The compiler doesn't make any efforts to simplify the code produced so
 it can be a bit verbose. It also assumes a small runtime, i.e. a
